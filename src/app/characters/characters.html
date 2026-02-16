@@ -1,0 +1,35 @@
+<div class="characters-root">
+  <h2>Rick and Morty Characters</h2>
+
+  <div class="controls">
+    <input
+      [(ngModel)]="query"
+      (ngModelChange)="onQueryChange($event)"
+      placeholder="Buscar por nombre"
+      aria-label="Buscar personajes por nombre"
+    />
+    <button (click)="clearSearch()">Buscar</button>
+  </div>
+
+  <div *ngIf="loading" class="loading" aria-live="polite">Cargando...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="!loading && !error && characters.length === 0" class="empty">No hay personajes para mostrar</div>
+
+  <div class="grid">
+    <div class="card" *ngFor="let c of characters">
+      <img class="card-img" [src]="c.image" [alt]="c.name" loading="lazy" />
+      <div class="card-body">
+        <h3 title="{{ c.name }}">{{ c.name }}</h3>
+        <p class="meta">{{ c.species }} — {{ c.status }}</p>
+        <p class="small">Origen: {{ c.origin?.name }}</p>
+        <p class="small">Ubicación: {{ c.location?.name }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pager">
+    <button (click)="prev()" [disabled]="page <= 1">Anterior</button>
+    <span>Página {{ page }}</span>
+    <button (click)="next()" [disabled]="characters.length === 0">Siguiente</button>
+  </div>
+</div>
