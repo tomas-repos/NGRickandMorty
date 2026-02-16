@@ -47,6 +47,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/YOUR_PROJECT_NAME
+          publish_dir: ./dist/rick-and-morty-app
           publish_branch: gh-pages
           keep_files: false
