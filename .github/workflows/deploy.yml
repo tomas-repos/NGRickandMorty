@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js 22
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -26,26 +26,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build production
+      - name: Build Angular app
         run: npm run build -- --configuration production --base-href /NGRickandMorty/
 
-      - name: Upload artifact (optional, for debugging)
-        uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: dist
-          path: ./dist
+          path: ./dist/rick-and-morty-app
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/rick-and-morty-app
-          publish_branch: gh-pages
-          keep_files: false
+        uses: actions/deploy-pages@v4
