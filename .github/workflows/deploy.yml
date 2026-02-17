@@ -44,8 +44,8 @@ jobs:
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
-        with:
+        with: 
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/rick-and-morty-app/browser   # 👈 aquí va el cambio
-          publish_branch: gh-pages
+          publish_dir: ./dist/rick-and-morty-app/browser  
+          publish_branch: gh-pages  
           keep_files: false
