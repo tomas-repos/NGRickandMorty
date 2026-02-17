@@ -30,22 +30,15 @@ jobs:
         run: npm run build -- --configuration production --base-href /NGRickandMorty/
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: dist
-          path: ./dist
+          path: ./dist/rick-and-morty-app/browser   # 👈 aquí está tu index.html
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with: 
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/rick-and-morty-app/browser  
-          publish_branch: gh-pages  
-          keep_files: false
+        uses: actions/deploy-pages@v4
