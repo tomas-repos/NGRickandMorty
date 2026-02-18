@@ -1,52 +1,58 @@
-<div class="stars"></div>
-<div class="app-container"> <!-- veamos si queda bien aca --> 
-  <div class="search">
+<!-- Capas de estrellas -->
+<div class="stars-random" aria-hidden="true"></div>
+<div class="stars-random2" aria-hidden="true"></div>
+<div class="shooting-star" aria-hidden="true"></div>
+<div class="shooting-star2" aria-hidden="true"></div>
+<div class="spaceship" aria-hidden="true"></div>
+
+<div class="stars-random" aria-hidden="true"></div>
+<div class="stars-random2" aria-hidden="true"></div>
+<div class="shooting-star" aria-hidden="true"></div>
+<div class="shooting-star2" aria-hidden="true"></div>
+<div class="spaceship" aria-hidden="true"></div>
+
+<!-- Contenedor principal -->
+<div class="app-container">
+  <!-- Buscador -->
+  <div class="search controls">
     <input 
       type="text" 
       [(ngModel)]="query" 
-      (ngModelChange)="onQueryChange($event)" 
+      (input)="onQueryChange($event.target.value)" 
       placeholder="Buscar personaje..." />
 
     <button (click)="clearSearch()" [disabled]="loading || !query">
       Limpiar
     </button>
   </div>
-</div>
 
-<!-- Mensajes de error -->
-<div *ngIf="error" class="error">
-  {{ error }}
-</div>
-
-<!-- Indicador de carga -->
-<div *ngIf="loading" class="loading">
-  Cargando personajes...
-</div>
-
-<!-- Lista de personajes -->
-<div class="characters">
-  <div *ngFor="let c of characters" class="character-card">
-    <img [src]="c.image" [alt]="c.name" />
-    <h3>{{ c.name }}</h3>
-    <p>{{ c.species }} - {{ c.status }}</p>
-    <p>Origen: {{ c.origin?.name }}</p>
-    <p>Ubicación: {{ c.location?.name }}</p>
+  <!-- Mensajes de error -->
+  <div *ngIf="error" class="error">
+    {{ error }}
   </div>
-</div>
 
-<!-- Paginación -->
-<div class="pagination">
-  <button 
-    (click)="prev()" 
-    [disabled]="page <= 1 || loading">
-    ⬅️ Anterior
-  </button>
+  <!-- Indicador de carga -->
+  <div *ngIf="loading" class="loading">
+    Cargando personajes...
+  </div>
 
-  <span>Página {{ page }} de {{ totalPages }}</span>
+  <!-- Lista de personajes -->
+  <div class="characters grid">
+    <div *ngFor="let c of characters" class="card character-card">
+      <img class="card-img" [src]="c.image" [alt]="c.name" />
+      <div class="card-body">
+        <h3>{{ c.name }}</h3>
+        <p class="meta">{{ c.species }} - {{ c.status }}</p>
+        <p class="small">Origen: {{ c.origin?.name }}</p>
+        <p class="small">Ubicación: {{ c.location?.name }}</p>
+      </div>
+    </div>
+  </div>
 
-  <button 
-    (click)="next()" 
-    [disabled]="page >= totalPages || loading">
-    Siguiente ➡️
-  </button>
+  <!-- Paginación -->
+  <div class="pager pagination">
+    <button (click)="prev()" [disabled]="page <= 1 || loading">⬅️ Anterior</button>
+    <span>Página {{ page }} de {{ totalPages }}</span>
+    <button (click)="next()" [disabled]="page >= totalPages || loading">Siguiente ➡️</button>
+  </div>
 </div>

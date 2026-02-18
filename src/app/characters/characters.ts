@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, Subscription, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
+import {  distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { RmApiService } from '../services/rm-api.service';
 
 type SmallCharacter = {
@@ -39,19 +39,18 @@ export class CharactersComponent implements OnInit, OnDestroy {
     // Carga inicial
     this.loadPage(1);
 
-    // Suscripción reactiva para búsqueda con debounce
     const s = this.search$.pipe(
       tap(() => { this.loading = true; this.error = ''; }),
-      debounceTime(400),
       distinctUntilChanged(),
       switchMap(q => {
         if (!q) return this.api.getCharacters(1);
         return this.api.searchCharacters(q, 1);
       }),
       catchError(err => {
-        this.error = 'No se encontraron resultados';
-        this.loading = false;
-        return of({ results: [], info: { pages: 1 } }); // devolvemos vacío para no romper el stream
+        console.error('search error', err); 
+        this.error = 'No se encontraron resultados'; 
+        this.loading = false; 
+        return of({ results: [], info: { pages: 1 } });
       })
     ).subscribe({
       next: (res: any) => {
