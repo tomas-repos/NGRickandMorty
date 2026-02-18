@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { RmApiService } from '../services/rm-api.service';
 
@@ -27,6 +27,7 @@ export class CharactersComponent implements OnInit, OnDestroy {
   loading = false;
   error = '';
   page = 1;
+  totalPages = 1;
   query = '';
 
   private search$ = new Subject<string>();
@@ -35,10 +36,10 @@ export class CharactersComponent implements OnInit, OnDestroy {
   constructor(private api: RmApiService) {}
 
   ngOnInit() {
-    // Carga por defecto la primera página
+    // Carga inicial
     this.loadPage(1);
 
-    // Suscripción reactiva para la búsqueda con debounce
+    // Suscripción reactiva para búsqueda con debounce
     const s = this.search$.pipe(
       tap(() => { this.loading = true; this.error = ''; }),
       debounceTime(400),
@@ -48,20 +49,15 @@ export class CharactersComponent implements OnInit, OnDestroy {
         return this.api.searchCharacters(q, 1);
       }),
       catchError(err => {
-        // catchError aquí para que el stream no se complete; devolvemos un observable vacío
-        this.error = 'Error en la búsqueda';
+        this.error = 'No se encontraron resultados';
         this.loading = false;
-        throw err;
+        return of({ results: [], info: { pages: 1 } }); // devolvemos vacío para no romper el stream
       })
     ).subscribe({
       next: (res: any) => {
         this.characters = res?.results || [];
         this.page = 1;
-        this.loading = false;
-      },
-      error: () => {
-        // ya seteado en catchError; aseguramos estado
-        this.characters = [];
+        this.totalPages = res?.info?.pages || 1;
         this.loading = false;
       }
     });
@@ -73,7 +69,7 @@ export class CharactersComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
-  // Carga una página específica (paginación normal)
+  // Carga una página específica
   loadPage(page = 1) {
     this.loading = true;
     this.error = '';
@@ -81,6 +77,7 @@ export class CharactersComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         this.characters = res?.results || [];
         this.page = page;
+        this.totalPages = res?.info?.pages || 1;
         this.loading = false;
       },
       error: () => {
@@ -91,56 +88,64 @@ export class CharactersComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Llamada desde el input para emitir cambios de búsqueda
+  // Input de búsqueda
   onQueryChange(q: string) {
     this.query = q;
     this.search$.next(q);
   }
 
-  // Botón limpiar: vacía query y recarga la página 1
   clearSearch() {
     this.query = '';
     this.loadPage(1);
   }
 
-  // Paginación simple
+  // Paginación
   next() {
-    // Si hay query activo, la API de búsqueda también soporta page; aquí simplificamos recargando siguiente página
-    if (this.query) {
-      this.loading = true;
-      this.api.searchCharacters(this.query, this.page + 1).subscribe({
-        next: (res: any) => {
-          this.characters = res?.results || [];
-          this.page++;
-          this.loading = false;
-        },
-        error: () => {
-          this.error = 'No hay más resultados';
-          this.loading = false;
-        }
-      });
+    const targetPage = this.page + 1;
+    if (targetPage > this.totalPages) {
+      this.error = 'No hay más páginas';
       return;
     }
-    this.loadPage(this.page + 1);
+
+    this.loading = true;
+    const obs = this.query
+      ? this.api.searchCharacters(this.query, targetPage)
+      : this.api.getCharacters(targetPage);
+
+    obs.subscribe({
+      next: (res: any) => {
+        this.characters = res?.results || [];
+        this.page = targetPage;
+        this.totalPages = res?.info?.pages || this.totalPages;
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'No hay más resultados';
+        this.loading = false;
+      }
+    });
   }
 
   prev() {
-    if (this.page <= 1) return;
-    if (this.query) {
-      this.loading = true;
-      this.api.searchCharacters(this.query, this.page - 1).subscribe({
-        next: (res: any) => {
-          this.characters = res?.results || [];
-          this.page--;
-          this.loading = false;
-        },
-        error: () => {
-          this.error = 'Error al cargar página';
-          this.loading = false;
-        }
-      });
-      return;
-    }
-    this.loadPage(this.page - 1);
+    const targetPage = this.page - 1;
+    if (targetPage < 1) return;
+
+    this.loading = true;
+    const obs = this.query
+      ? this.api.searchCharacters(this.query, targetPage)
+      : this.api.getCharacters(targetPage);
+
+    obs.subscribe({
+      next: (res: any) => {
+        this.characters = res?.results || [];
+        this.page = targetPage;
+        this.totalPages = res?.info?.pages || this.totalPages;
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'Error al cargar página';
+        this.loading = false;
+      }
+    });
   }
 }
