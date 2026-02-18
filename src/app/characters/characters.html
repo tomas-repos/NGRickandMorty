@@ -1,35 +1,52 @@
-<div class="characters-root">
-  <h2>Rick and Morty Characters</h2>
+<div class="stars"></div>
+<div class="app-container"> <!-- veamos si queda bien aca --> 
+  <div class="search">
+    <input 
+      type="text" 
+      [(ngModel)]="query" 
+      (ngModelChange)="onQueryChange($event)" 
+      placeholder="Buscar personaje..." />
 
-  <div class="controls">
-    <input
-      [(ngModel)]="query"
-      (ngModelChange)="onQueryChange($event)"
-      placeholder="Buscar por nombre"
-      aria-label="Buscar personajes por nombre"
-    />
-    <button (click)="clearSearch()">Buscar</button>
+    <button (click)="clearSearch()" [disabled]="loading || !query">
+      Limpiar
+    </button>
   </div>
+</div>
 
-  <div *ngIf="loading" class="loading" aria-live="polite">Cargando...</div>
-  <div *ngIf="error" class="error">{{ error }}</div>
-  <div *ngIf="!loading && !error && characters.length === 0" class="empty">No hay personajes para mostrar</div>
+<!-- Mensajes de error -->
+<div *ngIf="error" class="error">
+  {{ error }}
+</div>
 
-  <div class="grid">
-    <div class="card" *ngFor="let c of characters">
-      <img class="card-img" [src]="c.image" [alt]="c.name" loading="lazy" />
-      <div class="card-body">
-        <h3 title="{{ c.name }}">{{ c.name }}</h3>
-        <p class="meta">{{ c.species }} — {{ c.status }}</p>
-        <p class="small">Origen: {{ c.origin?.name }}</p>
-        <p class="small">Ubicación: {{ c.location?.name }}</p>
-      </div>
-    </div>
+<!-- Indicador de carga -->
+<div *ngIf="loading" class="loading">
+  Cargando personajes...
+</div>
+
+<!-- Lista de personajes -->
+<div class="characters">
+  <div *ngFor="let c of characters" class="character-card">
+    <img [src]="c.image" [alt]="c.name" />
+    <h3>{{ c.name }}</h3>
+    <p>{{ c.species }} - {{ c.status }}</p>
+    <p>Origen: {{ c.origin?.name }}</p>
+    <p>Ubicación: {{ c.location?.name }}</p>
   </div>
+</div>
 
-  <div class="pager">
-    <button (click)="prev()" [disabled]="page <= 1">Anterior</button>
-    <span>Página {{ page }}</span>
-    <button (click)="next()" [disabled]="characters.length === 0">Siguiente</button>
-  </div>
+<!-- Paginación -->
+<div class="pagination">
+  <button 
+    (click)="prev()" 
+    [disabled]="page <= 1 || loading">
+    ⬅️ Anterior
+  </button>
+
+  <span>Página {{ page }} de {{ totalPages }}</span>
+
+  <button 
+    (click)="next()" 
+    [disabled]="page >= totalPages || loading">
+    Siguiente ➡️
+  </button>
 </div>
