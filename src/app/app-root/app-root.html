@@ -1,4 +1,20 @@
-<div class="app-container"> 
-    <h1>Rick and Morty App</h1> 
-    <app-characters></app-characters> 
-</div>
+<header class="app-header">
+  <nav class="nav">
+    <a routerLink="/characters" class="app-btn">Rick and Morty App</a>
+  </nav>
+</header>
+
+<main class="app-main">
+  <div class="app-container">
+    <router-outlet></router-outlet>
+  </div>
+</main>
+
+<footer class="app-footer">
+  <small>© 2026 · Rick and Morty Demo</small>
+</footer>
+
+<!--<div class="app-container"> 
+    <h1>Rick and Morty App </h1> 
+    <router-outlet></router-outlet>
+</div>-->

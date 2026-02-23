@@ -1,97 +1,53 @@
-import { Inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, of, throwError } from 'rxjs';
+/*import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RmApiService {
-  constructor(
-    private http: HttpClient,
-    @Inject('API_URL') private base: string
-  ) {}
+  private http = inject(HttpClient);
+  private apiUrl = inject<string>('API_URL'); // token que definiste en main.ts
 
-  getCharacters(page = 1) {
-    const params = new HttpParams().set('page', String(page));
-    return this.http.get(`${this.base}/character`, { params })
-      .pipe(
-        catchError(err => {
-          console.error('getCharacters error', err);
-          return of({ results: [], info: { pages: 1 } });
-        })
-      );
+  getCharacters(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/character`);
   }
 
-  searchCharacters(name: string, page = 1) {
-    const params = new HttpParams()
-      .set('name', name)
-      .set('page', String(page));
-    return this.http.get(`${this.base}/character`, { params })
-      .pipe(
-        catchError(err => {
-          console.error('searchCharacters error', err);
-          return of({ results: [], info: { pages: 1 } });
-        })
-      );
-  }
-
-  getCharacterById(id: number): Observable<any> {
-    return this.http.get(`${this.base}/character/${id}`)
-      .pipe(
-        catchError(err => {
-          console.error('getCharacterById error', err);
-          return throwError(() => err);
-        })
-      );
-  }
-}
-
-/*import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, of, throwError } from 'rxjs';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class RmApiService {
-  private readonly base = 'https://rickandmortyapi.com/api';
-
-  constructor(private http: HttpClient) {}
-
-
-  getCharacters(page = 1) {
-  const params = new HttpParams().set('page', String(page));
-  return this.http.get(`${this.base}/character`, { params })
-    .pipe(
-      catchError(err => {
-        console.error('getCharacters error', err);
-        return of({ results: [], info: { pages: 1 } });
-      })
-    );
-}
-
- searchCharacters(name: string, page = 1) {
-  const params = new HttpParams()
-    .set('name', name)
-    .set('page', String(page));
-  return this.http.get(`${this.base}/character`, { params })
-    .pipe(
-      catchError(err => {
-        console.error('searchCharacters error', err);
-        return of({ results: [], info: { pages: 1 } });
-      })
-    );
-}
-
-
-  getCharacterById(id: number): Observable<any> {
-    return this.http.get(`${this.base}/character/${id}`)
-      .pipe(
-        catchError(err => {
-          console.error('RM API getCharacterById error', err);
-          return throwError(() => err);
-        })
-      );
+  getCharacterById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/character/${id}`);
   }
 }
 */
+import { Inject, Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, catchError, of, throwError } from 'rxjs';
+import { ApiResponse } from '../Models/ApiResponse';
+import { SmallCharacter } from '../Models/SmallCharacters';
+@Injectable({ providedIn: 'root' })
+export class RmApiService {
+  characters: SmallCharacter[] = [];//declaracion sugerida
+
+  private baseUrl = 'https://rickandmortyapi.com/api';
+  constructor(private http: HttpClient) {}
+  
+getCharacters(page: number): Observable<any> {
+  return this.http.get<any>(`${this.baseUrl}/character?page=${page}`);
+}
+
+
+
+  searchCharacters(query: string, page: number): Observable<ApiResponse<SmallCharacter>> {
+    return this.http.get<ApiResponse<SmallCharacter>>(
+      `${this.baseUrl}/character?name=${query}&page=${page}`,
+    );
+  }
+  getCharacterById(id: number): Observable<SmallCharacter> {
+    console.log('API getCharacterById llamado con ID', id);
+    return this.http.get<SmallCharacter>(`${this.baseUrl}/character/${id}`).pipe(
+      catchError((err) => {
+        console.error('getCharacterById error', err);
+        return throwError(() => err);
+      }),
+    );
+  }
+}

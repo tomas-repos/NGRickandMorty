@@ -1,9 +1,24 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, Subscription, of } from 'rxjs';
-import {  distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
+import { RouterModule } from '@angular/router';
 import { RmApiService } from '../services/rm-api.service';
+
+/*@Component({ 
+  selector: 'app-characters', 
+  standalone: true, 
+  imports: [CommonModule, RouterModule,FormsModule], 
+  templateUrl: './characters.html', 
+  styleUrls: ['./characters.css'] 
+}) 
+export class CharactersComponent { 
+  characters: any[] = []; 
+  constructor(private rmApi: RmApiService) {} 
+    ngOnInit() { 
+      this.rmApi.getCharacters().subscribe(data => { this.characters = data.results; }); 
+    } }
+*/
+
 
 type SmallCharacter = {
   id?: number;
@@ -18,79 +33,84 @@ type SmallCharacter = {
 @Component({
   selector: 'app-characters',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './characters.html',
   styleUrls: ['./characters.css']
 })
-export class CharactersComponent implements OnInit, OnDestroy {
+export class CharactersComponent implements OnInit {
   characters: SmallCharacter[] = [];
   loading = false;
   error = '';
   page = 1;
   totalPages = 1;
   query = '';
+  jumpPage: number | null = null;
 
-  private search$ = new Subject<string>();
-  private sub = new Subscription();
-
-  constructor(private api: RmApiService) {}
+  constructor(private api: RmApiService, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
-    // Carga inicial
     this.loadPage(1);
+  }
 
-    const s = this.search$.pipe(
-      tap(() => { this.loading = true; this.error = ''; }),
-      distinctUntilChanged(),
-      switchMap(q => {
-        if (!q) return this.api.getCharacters(1);
-        return this.api.searchCharacters(q, 1);
-      }),
-      catchError(err => {
-        console.error('search error', err); 
-        this.error = 'No se encontraron resultados'; 
-        this.loading = false; 
-        return of({ results: [], info: { pages: 1 } });
-      })
-    ).subscribe({
+  loadPage(page = 1) {
+    console.log('Cargando página', page);
+    this.loading = true;
+    this.error = '';
+    this.api.getCharacters(page).subscribe({
+      next: (res: any) => {
+        console.log('Respuesta API:', res);
+        this.characters = res.results || [];
+        this.page = page;
+        this.totalPages = res.info.pages;
+        this.loading = false;
+        this.cd.detectChanges();
+      },
+      error: (err: any) => {
+        if (err?.status === 404) {
+          this.error = 'No se encontraron resultados';
+        } else if (err?.status === 429) {
+          this.error = 'Demasiadas peticiones, intenta de nuevo en unos segundos';
+        } else {
+          this.error = 'Error al cargar personajes';
+        }
+        this.characters = [];
+        this.loading = false;
+        this.cd.detectChanges();
+      },
+    });
+  }
+
+  onQueryChange(q: string) {
+    this.query = q;
+    console.log('Buscando:', q);
+    if (!q) {
+      this.loadPage(1);
+      return;
+    }
+
+    this.loading = true;
+    this.error = '';
+    this.api.searchCharacters(q, 1).subscribe({
       next: (res: any) => {
         this.characters = res?.results || [];
         this.page = 1;
         this.totalPages = res?.info?.pages || 1;
         this.loading = false;
-      }
-    });
-
-    this.sub.add(s);
-  }
-
-  ngOnDestroy() {
-    this.sub.unsubscribe();
-  }
-
-  // Carga una página específica
-  loadPage(page = 1) {
-    this.loading = true;
-    this.error = '';
-    this.api.getCharacters(page).subscribe({
-      next: (res: any) => {
-        this.characters = res?.results || [];
-        this.page = page;
-        this.totalPages = res?.info?.pages || 1;
-        this.loading = false;
+        this.cd.detectChanges();
       },
-      error: () => {
-        this.error = 'Error al cargar personajes';
+      error: (err: any) => {
+        if (err?.status === 404) {
+          this.error = 'No se encontraron resultados';
+        } else if (err?.status === 429) {
+          this.error = 'Demasiadas peticiones, intenta de nuevo en unos segundos';
+        } else {
+          this.error = 'Error al cargar personajes';
+        }
         this.characters = [];
         this.loading = false;
-      }
+        this.cd.detectChanges();
+      },
     });
-  }
-
-  // Input de búsqueda
-  onQueryChange(q: string) {
-    this.query = q;
-    this.search$.next(q);
   }
 
   clearSearch() {
@@ -98,13 +118,9 @@ export class CharactersComponent implements OnInit, OnDestroy {
     this.loadPage(1);
   }
 
-  // Paginación
   next() {
     const targetPage = this.page + 1;
-    if (targetPage > this.totalPages) {
-      this.error = 'No hay más páginas';
-      return;
-    }
+    if (targetPage > this.totalPages) return;
 
     this.loading = true;
     const obs = this.query
@@ -117,11 +133,20 @@ export class CharactersComponent implements OnInit, OnDestroy {
         this.page = targetPage;
         this.totalPages = res?.info?.pages || this.totalPages;
         this.loading = false;
+        this.cd.detectChanges(); // 👈 fuerza refresco
       },
-      error: () => {
-        this.error = 'No hay más resultados';
+      error: (err: any) => {
+        if (err?.status === 404) {
+          this.error = 'No se encontraron resultados';
+        } else if (err?.status === 429) {
+          this.error = 'Demasiadas peticiones, intenta de nuevo en unos segundos';
+        } else {
+          this.error = 'Error al cargar personajes';
+        }
+        this.characters = [];
         this.loading = false;
-      }
+        this.cd.detectChanges();
+      },
     });
   }
 
@@ -140,11 +165,20 @@ export class CharactersComponent implements OnInit, OnDestroy {
         this.page = targetPage;
         this.totalPages = res?.info?.pages || this.totalPages;
         this.loading = false;
+        this.cd.detectChanges(); // 👈 fuerza refresco
       },
-      error: () => {
-        this.error = 'Error al cargar página';
+      error: (err: any) => {
+        if (err?.status === 404) {
+          this.error = 'No se encontraron resultados';
+        } else if (err?.status === 429) {
+          this.error = 'Demasiadas peticiones, intenta de nuevo en unos segundos';
+        } else {
+          this.error = 'Error al cargar personajes';
+        }
+        this.characters = [];
         this.loading = false;
-      }
+        this.cd.detectChanges();
+      },
     });
   }
 }

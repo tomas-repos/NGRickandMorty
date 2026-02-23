@@ -1,0 +1,28 @@
+<!--@if(character){  
+  <div>
+    <img [src]="character.image" alt="{{character.name}}">
+    <h2>{{character.name}}</h2>
+    <p>Especie: {{character.species}}</p>
+    <p>Estado: {{character.status}}</p>
+    <p>Origen: {{character.origin.name}}</p>
+    <p>Ubicación: {{character.location.name}}</p>
+  </div>
+}@else{
+  <p>cargando personaje</p>
+}-->
+  @if (character) {
+  <div class="detail-card">
+    <div class="detail-image">
+      <img [src]="character.image" alt="{{character.name}}">
+    </div>
+    <div class="detail-info">
+      <h2>{{character.name}}</h2>
+      <p><strong>Especie:</strong> {{character.species}}</p>
+      <p><strong>Estado:</strong> {{character.status}}</p>
+      <p><strong>Origen:</strong> {{character.origin?.name}}</p>
+      <p><strong>Ubicación:</strong> {{character.location?.name}}</p>
+    </div>
+  </div>
+} @else {
+  <p class="loading">Cargando personaje...</p>
+}
