@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  frontend:
+    build: .
+    image: ngrickandmorty-app:local
+    ports:
+      - "8080:80"
